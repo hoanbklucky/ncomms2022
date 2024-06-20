@@ -7,6 +7,7 @@ from subprocess import call
 import os   
 from glob import glob
 import json
+from pathlib import Path
 
 
 def read_json(file):
@@ -25,7 +26,7 @@ def create_folder(folder):
 
 def show_scan(path, filename, output_folder, mode_flag):
     image_name = filename.replace('nii', 'jpg')
-    data = nib.load(path + '/' + filename).get_data()
+    data = nib.load(os.path.join(path, filename)).get_fdata()
     plt.subplot(1, 3, 1)
     plt.imshow(data[95, :, :])
     plt.colorbar()
@@ -88,7 +89,13 @@ def main(raw_folder, root_folder, mode_flag, step_7_f, step_7_g):
         show_scan(scan_folder, name, root_folder, 'images')
 
 if __name__ == "__main__":
-    config = read_json('pipeline_config.json')
+
+    ROOT_DIR = Path(__file__).parent
+    TEXT_FILE = ROOT_DIR / 'pipeline_config.json'
+
+    print(TEXT_FILE.read_text())
+
+    config = read_json(TEXT_FILE)
     print(config)
     main(config['rawPath'], config['rootPath'], config['mode'], config['step7F'], config['step7G'])
 

@@ -5,14 +5,14 @@ from collections import defaultdict
 class TableData:
     def __init__(self):
         self.datasetName = 'ADNI1'
-        self.imageDir = '/data/datasets/ADNI1/'
+        self.imageDir = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ADNI data\raw_data'
         self.imageFileNameList, self.RIDList = self.get_filenames_and_IDs(self.imageDir)
         self.columnNames = []
         self.content = defaultdict(dict) # dictionary of dictionary; {RID: {colname1: val1, colname2: val2, ...}}
 
     def get_filenames_and_IDs(self, path):
-        fullpathList = glob(path + '*.nii')
-        fileNameList = [fullpath.split('/')[-1] for fullpath in fullpathList]
+        fullpathList = glob(path + '/*.nii')
+        fileNameList = [fullpath.split('\\')[-1] for fullpath in fullpathList]
         IDList = [filename[5:15] for filename in fileNameList]
         RIDList = [id[-4:].lstrip("0") for id in IDList]
         return fileNameList, RIDList
@@ -25,10 +25,10 @@ class TableData:
 
     def addColumns_demograph(self):
         self.columnNames.extend(['age', 'gender', 'education', 'hispanic', 'race'])
-        targetTable = '../../raw_tables/ADNI/PTDEMOG.csv'  # to get age and gender which table you need to look into
+        targetTable = r"C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\PTDEMOG.csv"  # to get age and gender which table you need to look into
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
                 self.content[row['RID']]['age'] = int(row['USERDATE'][:4])-int(row['PTDOBYY'])
                 self.content[row['RID']]['gender'] = 'male' if row['PTGENDER']=='1' else 'female'
                 self.content[row['RID']]['education'] = int(row['PTEDUCAT'])
@@ -50,7 +50,7 @@ class TableData:
 
     def addColumns_apoe(self):
         self.columnNames.extend(['apoe'])
-        targetTable = '../../raw_tables/ADNI/APOERES.csv'  # to get age and gender which table you need to look into
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\APOERES.csv'  # to get age and gender which table you need to look into
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['Phase'] == 'ADNI1' and row['RID'] in self.content:
@@ -62,22 +62,22 @@ class TableData:
     def addColumns_diagnosis(self):
         variables = ['NC', 'MCI', 'DE', 'COG', 'AD', 'PD', 'FTD', 'VD', 'DLB', 'PDD', 'ADD', 'OTHER']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/ADNI_DXSUM_PDXCONV.csv'
-        exclusTable = '../../raw_tables/ADNI/EXCLUSIO.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ADNI_DXSUM_PDXCONV.csv'
+        exclusTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\EXCLUSIO.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
-                if row['DXCURREN'] == '1': # NL healthy control
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
+                if row['DIAGNOSIS'] == '1': # NL healthy control
                     for var in ['MCI', 'DE', 'AD', 'FTD', 'VD', 'DLB', 'PDD', 'OTHER']: # Note that PD is not included here, since all DXPARK=-4
                         self.content[row['RID']][var] = 0   # 0 means no
                     self.content[row['RID']]['NC'] = 1      # 1 means yes
                     self.content[row['RID']]['COG'] = 0
-                elif row['DXCURREN'] == '2': # MCI patient
+                elif row['DIAGNOSIS'] == '2': # MCI patient
                     for var in ['NC', 'DE', 'AD', 'FTD', 'VD', 'DLB', 'PDD', 'OTHER']: # Note that PD is not included here, since all DXPARK=-4
                         self.content[row['RID']][var] = 0
                     self.content[row['RID']]['MCI'] = 1
                     self.content[row['RID']]['COG'] = 1
-                elif row['DXCURREN'] == '3': # Dementia patient
+                elif row['DIAGNOSIS'] == '3': # Dementia patient
                     self.content[row['RID']]['COG'] = 2
                     self.content[row['RID']]['ADD'] = 1
                     for var in ['NC', 'MCI']:
@@ -87,7 +87,7 @@ class TableData:
                     if row['DXOTHDEM'] != '-4': # all AD cases has DXOTHDEM = -4, thus other dementia info is unknown
                         print('found AD case with other dementia info')
                 else:
-                    print(row['DXCURREN']) # no print out, DXCURREN can only take value 1, 2, 3
+                    print(row['DIAGNOSIS']) # no print out, DXCURREN can only take value 1, 2, 3
                 if row['DXPARK'] != '-4':
                     print('found a case with PD info')  # no print here, turns out all DXPARK=-4
                     self.content[row['RID']]['PD'] = row['DXPARK']
@@ -106,13 +106,13 @@ class TableData:
     def addColumns_mmse(self):
         # variables = ['mmse', 'mmse_orient', 'mmse_workMem', 'mmse_concen', 'mmse_memRec', 'mmse_lang', 'mmse_visuSpa']
         # old_variables = ['mmse','Orientation','Working Memory','Concentration','Memory Recall','Language','Visuospatial']
-        variables = ['mmse']
-        old_variables = ['mmse']
+        variables = ['MMSE']
+        old_variables = ['MMSCORE']
         self.columnNames.extend(variables)
-        targetTable = '../../derived_tables/ADNI/ADNI_MMSE.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ADNI_MMSE.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
                 for old_var, new_var in zip(old_variables, variables):
                     self.content[row['RID']][new_var] = row[old_var]
 
@@ -120,10 +120,10 @@ class TableData:
         variables = ['cdr', 'cdrSum']
         old_variables = ['CDMEMORY','CDORIENT','CDJUDGE','CDCOMMUN','CDHOME','CDCARE']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/CDR.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\CDR.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
                 sumScore = 0
                 for var in old_variables:
                     sumScore += float(row[var])
@@ -132,8 +132,8 @@ class TableData:
 
     def addColumns_tesla(self):
         self.columnNames.extend(['Tesla'])
-        T15Table = self.readcsv('../../raw_tables/ADNI/MRIMETA.csv')
-        T3Table = self.readcsv('../../raw_tables/ADNI/MRI3META.csv')
+        T15Table = self.readcsv(r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\MRIMETA.csv')
+        T3Table = self.readcsv(r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\MRI3META.csv')
         for row in T15Table:
             if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
                 self.content[row['RID']]['Tesla'] = row['FIELD_STRENGTH'][:-1]
@@ -145,7 +145,7 @@ class TableData:
         variables = [ 'adas_q1','adas_q2','adas_q3','adas_q4','adas_q5','adas_q6','adas_q7','adas_q8','adas_q9','adas_q10','adas_q11','adas_q12','adas_q14', 'adas_total11', 'adas_totalmod']
         old_variables = ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10','Q11','Q12','Q14', 'TOTAL11', 'TOTALMOD']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/ADASSCORES.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ADASSCORES.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['VISCODE'] == 'bl' and row['RID'] in self.content:
@@ -156,7 +156,7 @@ class TableData:
         variables = ['trailA', 'trailB']
         old_variables = ['TMT_PtA_Complete', 'TMT_PtB_Complete']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/ITEM.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ITEM.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['VISCODE'] == 'bl' and row['RID'] in self.content:
@@ -170,7 +170,7 @@ class TableData:
                      'digitB', 'digitBL', 'digitF', 'digitFL']
         old_variables = ['LIMMTOTAL', 'LDELTOTAL', 'BNTTOTAL', 'CATANIMSC', 'CATVEGESC']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/NEUROBAT.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\NEUROBAT.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['Phase']=='ADNI1' and row['VISCODE'] in ['sc', 'bl'] and row['RID'] in self.content:
@@ -197,7 +197,7 @@ class TableData:
         variables = ['moca']
         old_variables = ['MOCA']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/ADNIMERGE.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ADNIMERGE.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['ORIGPROT'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
@@ -212,10 +212,10 @@ class TableData:
                          'NPIE', 'NPIF', 'NPIG', 'NPIH',
                          'NPII', 'NPIJ', 'NPIK', 'NPIL']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/NPIQ.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\NPIQ.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
                 for old_var, new_var in zip(old_variables, variables):
                     if row[old_var] and row[old_var] == '0':
                         self.content[row['RID']][new_var] = '0'
@@ -228,7 +228,7 @@ class TableData:
         old_variables = ['FAQFINAN', 'FAQFORM', 'FAQSHOP', 'FAQGAME', 'FAQBEVG',
                          'FAQMEAL', 'FAQEVENT', 'FAQTV', 'FAQREM', 'FAQTRAVL']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/FAQ.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\FAQ.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
@@ -239,7 +239,7 @@ class TableData:
         variables = ['his_CVHATT', 'his_PSYCDIS', 'his_Alcohol', 'his_SMOKYRS', 'his_PACKSPER']
         old_variables = ['MH4CARD', 'MHPSYCH', 'MH14ALCH', 'MH16BSMOK', 'MH16ASMOK']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/MEDHIST.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\MEDHIST.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
@@ -257,17 +257,17 @@ class TableData:
         variables = ['gds']
         old_variables = ['GDTOTAL']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/GDSCALE.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\GDSCALE.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
                 if row['GDTOTAL'] and 0 <= int(row['GDTOTAL']) <= 15:
                     self.content[row['RID']]['gds'] = row['GDTOTAL']
 
     def addColumns_FHQ(self):
         variables = ['his_NACCFAM']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/FHQ.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\FHQ.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
@@ -280,7 +280,7 @@ class TableData:
         variables = ['his_CBSTROKE', 'his_HYPERTEN']
         old_variables = ['HMSTROKE', 'HMHYPERT']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/MODHACH.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\MODHACH.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
             if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'sc' and row['RID'] in self.content:
@@ -290,10 +290,10 @@ class TableData:
     def addColumns_dep(self):
         variables = ['his_DEPOTHR']
         self.columnNames.extend(variables)
-        targetTable = '../../raw_tables/ADNI/ADNI_DXSUM_PDXCONV.csv'
+        targetTable = r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\ADNI_DXSUM_PDXCONV.csv'
         targetTable = self.readcsv(targetTable)
         for row in targetTable:
-            if row['Phase'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
+            if row['PHASE'] == 'ADNI1' and row['VISCODE'] == 'bl' and row['RID'] in self.content:
                 if row['DXNODEP'] == '1':
                     self.content[row['RID']]['his_DEPOTHR'] = '1'
                 else:
@@ -318,7 +318,7 @@ class TableData:
         self.addColumns_dep()
         self.addColumns_GDS()
         self.addColumns_Moca()
-        with open(self.datasetName+'.csv', 'w') as csvfile:
+        with open(r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\dataset_table\ADNI1\ADNI1.csv', 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.columnNames)
             writer.writeheader()
             for rid in self.content:

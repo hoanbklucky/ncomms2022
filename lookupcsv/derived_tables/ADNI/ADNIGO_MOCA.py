@@ -1,7 +1,7 @@
 import csv
 
 dict_data = []
-column_names = ['Phase',
+column_names = ['PHASE',
                 'RID',
                'VISCODE',
                'moca',
@@ -43,7 +43,7 @@ def moca_total(row):
     return MOCATOT
 
 
-with open('../../raw_tables/ADNI/MOCA.csv') as csvfile:
+with open(r"C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\raw_tables\ADNI\MOCA.csv") as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         content = {}
@@ -102,7 +102,7 @@ with open('../../raw_tables/ADNI/MOCA.csv') as csvfile:
         dict_data.append(content)
 
 
-with open('ADNIGO_MOCA.csv', 'w') as csvfile:
+with open(r'C:\Users\ngoth\OneDrive - flsouthern.edu\Research\AI4AD\ncomms2022\lookupcsv\derived_tables\ADNI\ADNIGO_MOCA.csv', 'w') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=column_names)
     writer.writeheader()
     for data in dict_data:
